@@ -1,8 +1,14 @@
-HEADER_SRC=../kernel/include/
-HEADER_DST=./original-kernel-headers/
+CLEAN_HEADER=bionic/libc/kernel/tools/clean_header.py
 
-STAGING_HEADERS="\
-    ion.h\
+KERNEL_PATH=kernel/sony/msm-4.4
+HEADER_SRC=$KERNEL_PATH/kernel/include
+HEADER_ORI=$KERNEL_PATH/common-headers/original-kernel-headers
+HEADER_SAN=$KERNEL_PATH/common-headers/kernel-headers
+
+STAGING_HEADERS_A="\
+    ion.h"
+
+STAGING_HEADERS_B="\
     msm_ion.h"
 
 LINUX_HEADERS="\
@@ -76,16 +82,29 @@ UAPI_HEADERS="\
     scsi/ufs/ioctl.h \
     asm-generic/ioctls.h"
 
-for x in $STAGING_HEADERS; do \
-cp $HEADER_SRC"../drivers/staging/android/uapi/"$x $HEADER_DST"linux/"$x
-done
+cd ../../../..
+
+source build/envsetup.sh
+breakfast dora
 
 for x in $LINUX_HEADERS; do \
-cp $HEADER_SRC$x $HEADER_DST$x
+cp $HEADER_SRC/$x $HEADER_ORI/$x
+$CLEAN_HEADER -u -v -k $HEADER_ORI -d $HEADER_SAN $x
 done
 
 for x in $UAPI_HEADERS; do \
-cp $HEADER_SRC"uapi/"$x $HEADER_DST$x
+cp $HEADER_SRC/"uapi/"$x $HEADER_ORI/$x
+$CLEAN_HEADER -u -v -k $HEADER_ORI -d $HEADER_SAN $x
+done
+
+for x in $STAGING_HEADERS_A; do \
+cp $KERNEL_PATH/"drivers/staging/android/ion/"$x $HEADER_ORI/"linux/"$x
+$CLEAN_HEADER -u -v -k $HEADER_ORI/linux -d $HEADER_SAN/linux $x
+done
+
+for x in $STAGING_HEADERS_B; do \
+cp $KERNEL_PATH/"drivers/staging/android/ion/msm/"$x $HEADER_ORI/"linux/"$x
+$CLEAN_HEADER -u -v -k $HEADER_ORI/linux -d $HEADER_SAN/linux $x
 done
 
 echo "Copy complete!"
